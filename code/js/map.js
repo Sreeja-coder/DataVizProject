@@ -143,6 +143,7 @@ plotting_attacks(year,data)
 	var category = data.map(i => i.attacktype1_txt)
   
 	var unique_cat = category.filter((v, i, a) => a.indexOf(v) == i);
+	//console.log(unique_cat)
 	
 	var colorScale2 = d3.scaleOrdinal().domain(unique_cat)
    .range(['#66c2a5', '#fc8d62', '#8da0cb', '#e78ac3', '#a6d854', '#ffd92f','#e6194b','#46f0f0','#f58231']);
@@ -181,7 +182,7 @@ plotting_attacks(year,data)
 		.attr("r", "2px")
 		.attr("fill", function (d) {
 		return colorScale2(d[2])}).transition().duration(1000);
-
+     this.draw_pie();
 //plotting the targets
  // add circles to svg
     
@@ -661,6 +662,56 @@ canvas()
 
 
 
+}
+draw_pie()
+{ 
+	var attack_cat = ["Assassination","Hostage Taking (Kidnapping)","Bombing/Explosion","Facility/Infrastructure Attack","Armed Assault","Hijacking","Unknown","Unarmed Assault","Hostage Taking (Barricade Incident)"]
+ var radius = 400/ 2;
+	var colorScale2 = d3.scaleOrdinal().domain(attack_cat)
+   .range(['#66c2a5', '#fc8d62', '#8da0cb', '#e78ac3', '#a6d854', '#ffd92f','#e6194b','#46f0f0','#f58231']);
+	var dataset = [
+	{ name: 'Assassination', total: 8124, percent: 67.9 },
+	{ name: 'Hostage Taking (Kidnapping)', total: 1567, percent: 13.1 },
+	{ name: 'Bombing/Explosion', total: 1610, percent: 13.5 },
+	{ name: 'Facility/Infrastructure Attack', total: 660, percent: 5.5 },
+	{ name: 'Armed Assault', total: 660, percent: 5.5 },
+	{ name: 'Hijacking', total: 660, percent: 5.5 },
+	{ name: 'Unknown', total: 660, percent: 5.5 },
+	{ name: 'Unarmed Assault', total: 660, percent: 5.5 },
+	{ name: 'Hostage Taking (Barricade Incident)', total: 660, percent: 5.5 }
+];
+	var arc = d3.arc()
+    .outerRadius(radius - 80)
+    .innerRadius(radius - 100);
+	
+	var pie = d3.layout.pie()
+    .sort(null)
+	 .startAngle(1.1*Math.PI)
+    .endAngle(3.1*Math.PI)
+    .value(function(d) { return d.total; });
+	console.log(pie)
+	//remove a group 
+	d3.select("#stats").select("#piegroup").remove();
+	//create group
+	let piegroup = d3.select("#stats").append("g").attr("id","piegroup").attr("transform", "translate(140,150)");
+	
+	 var g = piegroup.selectAll(".arc")
+      .data(pie(dataset))
+    .enter().append("g")
+      .attr("class", "arc");
+	 
+	  g.append("path")
+	.style("fill", function(d){console.log(d.data.name);return colorScale2(d.data.name)} )
+    .transition().delay(function(d,i) {
+	return i * 500; }).duration(500)
+	.attrTween('d', function(d) {
+		var i = d3.interpolate(d.startAngle+0.1, d.endAngle);
+		return function(t) {
+			d.endAngle = i(t); 
+			return arc(d)
+			}
+		}); 
+	
 }
 
 }
