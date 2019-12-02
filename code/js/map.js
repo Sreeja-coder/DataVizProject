@@ -934,6 +934,7 @@ function plot_weapons_individual(catg)
       return radiusScale (d[2]);
    })
    .attr("fill", "red")
+   .attr("stroke","black");
   
 
 	 
