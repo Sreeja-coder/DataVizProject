@@ -12,8 +12,7 @@ d3.csv("data/weapons_csv.csv").then(csvData => {
 });
 
 });
-//let csvData = d3.csv("data/globalterrorismdb.csv").then(function(data){});
-	//console.log(csvData)
+
 function categorychange(category)
  { let globalmap = new Map();
  let flag3 = 1
