@@ -38,8 +38,10 @@ var projection = d3.geoMercator().scale(130).translate( [width / 2, height / 1.5
 var path = d3.geoPath().projection(projection); //defining the path for projection
 
 //defining groups for each country #d3d3d3 .style('stroke-width', 1.5)
+	let that = this;
+	var current_clicked_country;
 	
-	 svg.append("g")
+ svg.append("g")
       .attr("class", "countries")
     .selectAll("path")
       .data(world.features)
@@ -50,19 +52,18 @@ var path = d3.geoPath().projection(projection); //defining the path for projecti
       // tooltips
         .style("stroke","white")
         .style('stroke-width', 0.4)
-		.on("click",this.storytelling);
+		.on("click",function(d){  that.storytelling(d.properties.name,that.data,0)});
+		
 //creating the outline using path
-svg.append("path")
+let outline = svg.append("path")
       .datum(topojson.mesh(world.features, function(a, b) { return a.id !== b.id; }))
        // .datum(topojson.mesh(data.features, function(a, b) { return a !== b; }))
       .attr("class", "names")
-      .attr("d", path);
+      .attr("d", path)
+	  
 	
 	
-//let aa = [77.837451,35.49401] logitude and latitude;
-//let bb = [77.837451,35.49401];
-//let aa = [75.3412,31.1471]
-//let bb = [75.3412,31.1471]
+
 let plotg = svg.append("g").attr("class","plotpoints");
 	svg.append("select").attr("option","Weapons");
 //calling the year slider	
@@ -107,18 +108,22 @@ drawYearBar() {
     	output.innerHTML=this.value;
 		let category1 = document.getElementById("category").value
 		if (category1 == 'category'){
-           console.log(category1)		
+           //console.log(category1)		
 		if(this.value==1993){
 			
 			that.canvas()
-			}		   
+			}
+		//console.log(document.getElementById("current_country").innerHTML)
 		that.plotting_attacks(this.value,that.data);
+		if(document.getElementById("flag_c").innerHTML == 1)
+		that.storytelling(document.getElementById("current_country").innerHTML,that.data,1);
 		//that.categorychange1(category1,that.data,1)
 		}
         else{ if(this.value==1993){
 			
 			that.canvas()
 			}
+			d3.select("#overlay").remove()
 			that.categorychange(category1,that.data)}		
 			}
 		
@@ -140,6 +145,7 @@ plotting_attacks(year,data)
 	let plot = d3.select(".svg")
 	//setting the color using 
 	let flag = 0
+	let count_attack_type = [0,0,0,0,0,0,0,0,0]
 	var category = data.map(i => i.attacktype1_txt)
   
 	var unique_cat = category.filter((v, i, a) => a.indexOf(v) == i);
@@ -163,6 +169,15 @@ plotting_attacks(year,data)
 		
 	if(d.year == year){	
 	let aa =[d.longitude, d.latitude,d.attacktype1_txt];
+	if(d.attacktype1_txt =="Assassination"){count_attack_type[0]=count_attack_type[0]+1}
+	if(d.attacktype1_txt =="Hostage Taking (Kidnapping)"){count_attack_type[1]=count_attack_type[1]+1}
+	if(d.attacktype1_txt =="Bombing/Explosion"){count_attack_type[2]=count_attack_type[2]+1}
+	if(d.attacktype1_txt =="Facility/Infrastructure Attack"){count_attack_type[3]=count_attack_type[3]+1}
+	if(d.attacktype1_txt =="Armed Assault"){count_attack_type[4]=count_attack_type[4]+1}
+	if(d.attacktype1_txt =="Hijacking"){count_attack_type[5]=count_attack_type[5]+1}
+	if(d.attacktype1_txt =="Unknown"){count_attack_type[6]=count_attack_type[6]+1}
+	if(d.attacktype1_txt =="Unarmed Assault"){count_attack_type[7]=count_attack_type[7]+1}
+	if(d.attacktype1_txt =="Hostage Taking (Barricade Incident)"){count_attack_type[8]=count_attack_type[8]+1}
 	dataPoints.push(aa);
 	//console.log(aa,bb)
 			
@@ -182,7 +197,7 @@ plotting_attacks(year,data)
 		.attr("r", "2px")
 		.attr("fill", function (d) {
 		return colorScale2(d[2])}).transition().duration(1000);
-     this.draw_pie();
+     this.draw_pie(count_attack_type,year);
 //plotting the targets
  // add circles to svg
     
@@ -190,36 +205,312 @@ plotting_attacks(year,data)
 	
 }
 
-storytelling()
-    {
-      let i = 0;
-      var data = "B";
-     let newdiv = d3.select("#map-holder").append("div").attr("id","overlay")
+storytelling(countryname,data1,sourceflag)
+    {  var data = "B";
+	  console.log(sourceflag)
+    
+	 if(sourceflag == 1){
+		 console.log("inside")
+		 d3.select(".rectsvg").select(".pie_svg_group").remove();
+		  d3.select(".rectsvg").select(".first_text").remove();
+		  d3.select(".rectsvg").select(".text_group").remove();
+		  d3.select(".rectsvg").selectAll(".rectangles").remove();
+		  d3.select(".rectsvg").selectAll(".tick").remove();
+	d3.select(".rectsvg").selectAll(".label").remove();
+	//d3.select("#overlay").remove(".rectsvg")
+	//var rectsvg =  d3.select("#overlay").append("svg").attr("width","960").attr("height","600").attr("class","rectsvg");
+       
+	 }
 	 //let buttonpress=newdiv.append("button").attr("title","key");
-	 newdiv.selectAll("button")
+	 else{
+		 
+		  var newdiv = d3.select("#map-holder").append("div").attr("id","overlay");
+		  newdiv.selectAll("button")
 		.data(data)
 		.enter()
 		.append("button")
 		.attr("id","buttons")
 		.text("BACK")
-		.on("click",function(){document.getElementById("overlay").onclick = function(){d3.select("#overlay").remove()}});
-       let rectsvg =  newdiv.append("svg").attr("width","960").attr("height","600")
-         
-        // console.log( document.getElementById("overlay").style.display)
-        //document.getElementById("overlay").onclick=that.overlayoff
+		.on("click",function(){document.getElementById("overlay").onclick = function(){output2.innerHTML = 0;d3.select("#overlay").remove()}});
+       d3.select("#overlay")
+          .transition()
+          .duration(1000)
+          .style("background-color", "#cccccc");
+		  d3.select(".rectsvg").select(".pie_svg_group").remove();
+		  d3.select(".rectsvg").select(".first_text").remove();
+		  d3.select(".rectsvg").select(".text_group").remove();
+		  d3.select(".rectsvg").select(".rectangles").remove();
+	d3.select(".rectsvg").select(".label").remove();
+	var rectsvg =  d3.select("#overlay").append("svg").attr("width","960").attr("height","600").attr("class","rectsvg");
+       
+	 }
+	  if(countryname == 'USA'){countryname= 'United States'}
+      //let i = 0;
+    
+	 var output2=document.getElementById("flag_c");
+		output2.innerHTML = 1;
+	 
+	    let first_text =  d3.select(".rectsvg").append("g").attr("class","first_text");
+		  var output1=document.getElementById("current_country");
+		  
+			  output1.innerHTML = countryname;
+			  
+		
+			  
+	 //first_text.append("text").text("Country : "+countryname+"  "+"Year: "+document.getElementById("demo").innerHTML).attr("transform","translate(10,50)") 
+     //formatting data for piechart
+	 let gname_arr = []
+	 let gname_count = []
+	 let year = document.getElementById("demo").innerHTML
+		data1.forEach(function(d){if(d.year==year && d.country == countryname ){gname_arr.push(d.gname)}})
+	 
+	var unique_cat = gname_arr.filter((v, i, a) => a.indexOf(v) == i);
+	console.log(unique_cat)
+	for(let j =0;j<unique_cat.length;j++){
+		gname_count.push(gname_arr.filter((v) => (v === unique_cat[j])).length)
+	}
+	
+	let dict_gname=[];
+	for(let e = 0; e < unique_cat.length;e++){
+	dict_gname.push({
+    key:  gname_count[e],
+    value: unique_cat[e],
+	
+});
 
-         //document.getElementById("overlay").onclick = function(){d3.select("#overlay").remove()}
-         //document.getElementById("map-holder").onclick=function(){d3.select("#overlay").remove()}
+	}
+	gname_count.sort(function(a, b){return b-a});
+	let total_val = gname_count[0]+gname_count[1]+gname_count[2]+gname_count[3];
+	let sorted_dict = [];
+	for(let e = 0; e < unique_cat.length;e++){
+	sorted_dict.push({
+    key:  dict_gname[gname_count[e]],
+    value: gname_count[e] 
+	});}
+	 dict_gname = []
+	for(let k =0;k<5;k++){
+		dict_gname.push({
+    key:  unique_cat[k],
+    value:  gname_count[k]
+});
+		
+	}
+	
+//creating bar graph
+var states=[];
+let bars=[];
+//let newdiv = d3.select("#map-holder").append("div").attr("id","overlay")
+this.data.forEach((d,i)=>
+		{
 
-        //this.overlayoff()
-        //console.log(x)
+       if(d.year==year && d.country==countryname)
+  	     states.push(d.state)
+		})	
+console.log(states)
+var unique_sat = states.filter((v, i, a) => a.indexOf(v) == i);
+        console.log(unique_sat);
+       var count_state={};
+       var len=states.length;
 
+ 
+var state_data=[];
+        for( let i=0;i< states.length;i++ ) {
+            count_state[states[i]] = (count_state[states[i]] || 0) +1;
+        }
 
+var vals=[]
+        vals=Object.values(count_state)
+var keys=[]
+        keys=Object.keys(count_state)
 
-
+for(let i=0;i<keys.length;i++){
+state_data.push({
+    key:keys[i],
+    value:vals[i]
+})
     }
 
+d3.select(".rectsvg").selectAll(".rectangles").remove();
+d3.select(".rectsvg").selectAll(".label").remove();
+//let rectsvg =  newdiv.append("svg").attr("width","960").attr("height","600").attr("class","rectsvg")
+        var keys   = Object.keys(count_state);
+        var min = Math.min.apply(null, keys.map(function(x) { return count_state[x]} ));
+        var max = Math.max.apply(null, keys.map(function(x) { return count_state[x]} ));	
 
+var xscale=d3.scaleLinear().domain([min,max]).range([20,150])
+console.log(state_data);
+var z=0;
+var rectangles = d3.select(".rectsvg").selectAll("rect")
+                                     .data(state_data)
+                                     .enter()
+                                     .append("rect")
+                                  .attr("class","rectangles")
+
+var rectangleAttributes = rectangles
+                                   .attr("x",function (d,i) {
+									   z=z+1;
+                                       return (z*20)+150 ;
+                                   })
+                                   .attr("y", 55)
+                                   .attr("height", 0)
+                                   .attr("width", 20)
+                                  .style("fill", 'red')
+                                  .attr("stroke",'black')
+            .attr("stroke-width",0.5)
+            .transition().duration(1000).attr("height",function (d,i) {
+            return xscale(d.value);
+        })
+var scale1 = d3.scaleLinear()
+            .domain([min,max])
+            .range([0, 100]);
+
+ d3.select(".rectsvg").select(".ticks").remove();
+        // Add scales to axis
+		//var xaxis = d3.select(".rectsvg").append("g").attr("class","xaxis").call(x_axis1);
+		
+        var x_axis1 = d3.axisRight()
+          .scale(scale1);
+			//xaxis.call(x_axis1)
+			//d3.select(".rectsvg").select("xaxis").remove();
+ //d3.select(".rectsvg").append("g").attr("class","xaxis").call(x_axis1).attr("transform","translate(20,20)");
+        var x1_ele = d3.select(".rectsvg").append("g").attr("class",".ticks")
+            .attr("transform", "translate(30,60)")
+    		.call(x_axis1.ticks(5))
+			var x =0;
+d3.select(".rectsvg").selectAll("text.label").data(state_data).enter().append('text').attr("class","label").text(function (d) {
+        return d.key;
+    })
+        
+        .attr("font-family", "sans-serif")
+        .attr("font-size", "15px")
+        .attr("transform","rotate(270)")
+        .attr("x", function(d,i) { return -50; })
+        .attr("y", function (d,i) {
+			x= x+1
+            return (x+8)*20;
+        } )
+		
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	draw_pie_svg(dict_gname,total_val)
+	 
+	 
+	 
+	 
+	 
+	 function draw_pie_svg(dict_gname)  
+	 {  //console.log(gname_count1)
+	 var colorScale = d3.scaleOrdinal()
+   .range(['#4c0000', '#cc0000', '#ff3232', '#ff7f7f', '#ffe5e5']);
+
+		 var arc = d3.arc()
+    .outerRadius(110)
+    .innerRadius(15);
+
+var pie = d3.layout.pie()
+    .sort(null)
+	 .startAngle(1.1*Math.PI)
+    .endAngle(3.1*Math.PI)
+    .value(function(d) { return d.value; });
+	
+d3.select(".rectsvg").select("pie_svg_group").remove();
+
+let pie_svg_group = d3.select(".rectsvg").append("g").attr("class","pie_svg_group").attr("transform","translate(450, 400)");
+
+var g_svg = pie_svg_group.selectAll(".arc")
+      .data(pie(dict_gname))
+    .enter().append("g")
+      .attr("class", "arc");
+	  
+ g_svg.append("path").attr("id","piepathsvg")
+	.style("fill", function(d,i){ return colorScale(i)} )
+    .transition().delay(function(d,i) {
+	return i * 500; }).duration(500)
+	.attrTween('d', function(d) {
+		var i = d3.interpolate(d.startAngle+0.1, d.endAngle);
+		return function(t) {
+			d.endAngle = i(t); 
+			return arc(d)
+			}
+		}) 
+	
+		 var div = d3.select("#overlay").append("div").attr("class", "toolTip");
+		d3.selectAll("#piepathsvg").on("mousemove", function(d) {
+	    div.style("left",  d3.event.pageX-550+"px");
+		  div.style("top",  d3.event.pageY-50+"px");
+		  div.style("display", "inline-block");
+    div.html(d.data.key + "<br>" + ((d.data.value/total_val)*100).toFixed(2) + "%");
+});
+	
+	  
+	d3.selectAll("#piepathsvg").on("mouseout", function(d){
+    div.style("display", "none");
+	 
+});	
+		
+    }
+	summary()
+	
+function summary(){
+	let state1;
+	d3.select(".rectsvg").select(".text_group").remove();
+	vals.sort(function(a, b){return b-a});
+	for(let k = 0; k < state_data.length;k++){
+	if(state_data[k].value == vals[0])
+	{state1 = state_data[k].key}
+	}
+	let state_gname=[];
+	data1.forEach(function(d){if(d.year== year && d.state == state1){state_gname.push(d.gname)}})
+	var unique_gname_state = state_gname.filter((v, i, a) => a.indexOf(v) == i);
+    var gname_count_state = [];
+	//console.log(unique_gname_state)
+	for(let n = 0;n<unique_gname_state.length;n++){
+		let count = 0;
+		state_gname.forEach(function(d){if(d==unique_gname_state[n]){count = count +1}});
+		gname_count_state.push(count)
+	}
+//console.log(gname_count_state)
+	var state_gname_dict=[];
+	
+	for(let e = 0; e < unique_gname_state.length;e++){
+	state_gname_dict.push({
+    key:gname_count_state[e],
+    value:unique_gname_state[e]
+	
+	});}
+	
+gname_count_state.sort(function(a, b){return b-a});
+//console.log(state_gname_dict)
+let state_gname_dict_sorted=[];
+for(let e = 0; e <unique_gname_state.length ;e++){
+	for(let f =0;f<unique_gname_state.length ;f++){
+	if(gname_count_state[e] == state_gname_dict[f].key){
+state_gname_dict_sorted.push({
+
+key: state_gname_dict[f].value,
+value: gname_count_state[e]
+	
+});	
+	}
+}
+
+	}	
+	let text_group = d3.select(".rectsvg").append("g").attr("class","text_group");
+d3.select(".text_group").append("text").text(state1+" was majorly attacked by "+state_gname_dict[0].value).attr("transform","translate(5,220)");
+d3.select(".text_group").append("text").text("and"+state_gname_dict[1].value).attr("transform","translate(5,250)");
+
+}
+	}
 categorychange(category,data1)
 {
 	//console.log(category)
@@ -240,7 +531,10 @@ categorychange(category,data1)
 	{
 	let circlescategory = plot_category.select(".plotpoints").selectAll("circle");
 	circlescategory.remove();
-	
+		d3.select("#stats").select("#piegroup").remove();
+	d3.select("#stats").select(".textg").remove();
+	d3.select("#stats").select(".sentenceg").remove();
+	d3.select("#stats").select(".sentenceg1").remove();
 	
 	let count_weapons = [0,0,0,0,0,0,0,0];
 	
@@ -593,6 +887,11 @@ function plot_weapons_individual(catg)
 
  if(category == 'Intensity'){
 	d3.select("#stats").select("#treegroup").remove();
+		d3.select("#stats").select("#piegroup").remove();
+		d3.select("#stats").select("#piegroup").remove();
+	d3.select("#stats").select(".textg").remove();
+	d3.select("#stats").select(".sentenceg").remove();
+	d3.select("#stats").select(".sentenceg1").remove();
 	var nkill=[];
 	var dataPoints = [];
    var nwound=[];
@@ -612,7 +911,7 @@ function plot_weapons_individual(catg)
    dataPoints.push(aa);
 
 	}})
-	console.log(flag)
+	//console.log(flag)
 	if(flag==1){
    console.log("hi")
    this.canvas();
@@ -663,22 +962,24 @@ canvas()
 
 
 }
-draw_pie()
-{ 
+draw_pie(count_attack_type,year)
+{    let sum = 0;
+count_attack_type.forEach(element => sum = sum + element);
+//console.log(sum)
 	var attack_cat = ["Assassination","Hostage Taking (Kidnapping)","Bombing/Explosion","Facility/Infrastructure Attack","Armed Assault","Hijacking","Unknown","Unarmed Assault","Hostage Taking (Barricade Incident)"]
  var radius = 400/ 2;
 	var colorScale2 = d3.scaleOrdinal().domain(attack_cat)
    .range(['#66c2a5', '#fc8d62', '#8da0cb', '#e78ac3', '#a6d854', '#ffd92f','#e6194b','#46f0f0','#f58231']);
 	var dataset = [
-	{ name: 'Assassination', total: 8124, percent: 67.9 },
-	{ name: 'Hostage Taking (Kidnapping)', total: 1567, percent: 13.1 },
-	{ name: 'Bombing/Explosion', total: 1610, percent: 13.5 },
-	{ name: 'Facility/Infrastructure Attack', total: 660, percent: 5.5 },
-	{ name: 'Armed Assault', total: 660, percent: 5.5 },
-	{ name: 'Hijacking', total: 660, percent: 5.5 },
-	{ name: 'Unknown', total: 660, percent: 5.5 },
-	{ name: 'Unarmed Assault', total: 660, percent: 5.5 },
-	{ name: 'Hostage Taking (Barricade Incident)', total: 660, percent: 5.5 }
+	{ name: 'Assassination', total:count_attack_type[0] , percent: ((count_attack_type[0]/sum)*100).toFixed(2) },
+	{ name: 'Hostage Taking (Kidnapping)', total: count_attack_type[1], percent: ((count_attack_type[1]/sum)*100).toFixed(2) },
+	{ name: 'Bombing/Explosion', total: count_attack_type[2], percent: ((count_attack_type[2]/sum)*100).toFixed(2) },
+	{ name: 'Facility/Infrastructure Attack', total: count_attack_type[3], percent: ((count_attack_type[3]/sum)*100).toFixed(2) },
+	{ name: 'Armed Assault', total: count_attack_type[4], percent: ((count_attack_type[4]/sum)*100).toFixed(2) },
+	{ name: 'Hijacking', total: count_attack_type[5], percent: ((count_attack_type[5]/sum)*100).toFixed(2)},
+	{ name: 'Unknown', total: count_attack_type[6], percent: ((count_attack_type[6]/sum)*100).toFixed(2) },
+	{ name: 'Unarmed Assault', total: count_attack_type[7], percent: ((count_attack_type[7]/sum)*100).toFixed(2) },
+	{ name: 'Hostage Taking (Barricade Incident)', total: count_attack_type[8], percent: ((count_attack_type[8]/sum)*100).toFixed(2) }
 ];
 	var arc = d3.arc()
     .outerRadius(radius - 80)
@@ -689,19 +990,22 @@ draw_pie()
 	 .startAngle(1.1*Math.PI)
     .endAngle(3.1*Math.PI)
     .value(function(d) { return d.total; });
-	console.log(pie)
+	
 	//remove a group 
 	d3.select("#stats").select("#piegroup").remove();
+	d3.select("#stats").select(".textg").remove();
+	d3.select("#stats").select(".sentenceg").remove();
+	d3.select("#stats").select(".sentenceg1").remove();
 	//create group
-	let piegroup = d3.select("#stats").append("g").attr("id","piegroup").attr("transform", "translate(140,150)");
+	let piegroup = d3.select("#stats").append("g").attr("id","piegroup").attr("transform", "translate(140,300)");
 	
 	 var g = piegroup.selectAll(".arc")
       .data(pie(dataset))
     .enter().append("g")
       .attr("class", "arc");
 	 
-	  g.append("path")
-	.style("fill", function(d){console.log(d.data.name);return colorScale2(d.data.name)} )
+	  g.append("path").attr("id","piepath")
+	.style("fill", function(d){return colorScale2(d.data.name)} )
     .transition().delay(function(d,i) {
 	return i * 500; }).duration(500)
 	.attrTween('d', function(d) {
@@ -712,6 +1016,42 @@ draw_pie()
 			}
 		}); 
 	
+	let textg = d3.select("#stats").append("g").attr("class","textg");
+	let sentenceg = d3.select("#stats").append("g").attr("class","sentenceg");
+	let sentenceg1 = d3.select("#stats").append("g").attr("class","sentenceg1");
+	textg.append("text").text("Modes of Attack").attr("transform", "translate(82,310)").transition().delay(3500).duration(500).attrTween("font-weight",function() { return d3.interpolate("normal", "bold"); });
+	
+	// adding a sentence
+	let maxv = 0;
+	let indexv = 0;
+	for(let i=0;i<9;i++){
+	
+	maxv = Math.max(dataset[i].total,maxv);
+	if(dataset[i].total == maxv){indexv = i;}
+	}
+	//console.log(indexv)
+	var text1= " ";
+	
+	 text1 = "In the year "+year+" "+dataset[indexv].percent+"% attacks has been";
+	d3.select(".sentenceg").append("text").text(text1)
+				.attr("transform", "translate(10,100)").transition().delay(4000).duration(500).attrTween("font-weight",function() { return d3.interpolate("normal", "bold"); });
+	
+	d3.select(".sentenceg1").append("text").text("carried out using "+dataset[indexv].name+" as a mode")
+				.attr("transform", "translate(1,140)").transition().delay(4000).duration(500).attrTween("font-weight",function() { return d3.interpolate("normal", "bold"); });
+	
+	//tooltips
+	var div = d3.select("body").append("div").attr("class", "toolTip");
+		d3.selectAll("#piepath").on("mousemove", function(d) {
+	    div.style("left", d3.event.pageX+10+"px");
+		  div.style("top", d3.event.pageY-25+"px");
+		  div.style("display", "inline-block");
+    div.html((d.data.name)+"<br>"+(d.data.total) + "<br>"+(d.data.percent) + "%");
+});
+	  
+	d3.selectAll("#piepath").on("mouseout", function(d){
+    div.style("display", "none");
+});
+
 }
 
 }
